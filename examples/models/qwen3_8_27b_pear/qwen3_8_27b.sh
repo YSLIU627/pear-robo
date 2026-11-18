@@ -72,11 +72,19 @@ configure_h100() {
   TQ_NODE_RESOURCE=trainer
 }
 
+# 4 x GB200 186GB per machine: the GB300 layout; the per-GPU micro-batch cap sized as on H100,
+# one maximum-length trajectory per SP group, since GB300's 69632 assumes 288 GB. Set SESSIONS_PER_REPLICA lower too.
+configure_gb200() {
+  configure_gb300
+  TOK_PER_GPU=$(((MAX_MODEL_LEN + SP - 1) / SP))
+}
+
 case "$GPU" in
   gb300) configure_gb300 ;;
+  gb200) configure_gb200 ;;
   h100) configure_h100 ;;
   *)
-    echo "unknown GPU $GPU (gb300 | h100)"
+    echo "unknown GPU $GPU (gb300 | gb200 | h100)"
     exit 1
     ;;
 esac
