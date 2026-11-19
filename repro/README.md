@@ -8,7 +8,8 @@ code at `d604856`. The only code change is a `GPU=gb200` profile (the other comm
    148 stage-1 steps, at a quarter of the paper's batch, the training success rate is about 3.9% (steps 12-15), up from
    about 1.7% (steps 1-3) (section 2).
 
-Status (2026-11-19, step 15): stage-1 RL is still running and this branch will be updated.
+Status (2026-11-19): stage-1 RL was stopped after step 15. A LIBERO evaluation of the step-15 checkpoint (same
+protocol as section 1) is running and will be added here.
 
 ## 1. Released checkpoints on LIBERO
 
@@ -63,6 +64,11 @@ This confirms the end point of training, not the training itself. The full 2,000
   - Fewer groups need to be sampled per step as more of them are kept, so steps are getting faster: 23-28 minutes for
     steps 13-15, against 42-52 minutes for steps 1-3.
 
+**Mid-run checkpoint.** The step-15 checkpoint was exported with `scripts/export_checkpoint.sh` to a Hugging Face
+model directory, which a recipe takes as `MODEL`. It is bf16, except `visual` and `A_log`, which stay fp32 as the run's
+`rollout.fp32_modules` names them. It has no `mtp.*` tensors: training does not update the multi-token-prediction
+head, and the recipe decodes without speculation. The weights are not published here.
+
 ## 3. Differences from the paper's stage 1
 
 - **Batch:** 32 groups x 8 rollouts per step, counted after the group filter (paper: 128 x 8). The mini-batch is the
@@ -80,7 +86,7 @@ This confirms the end point of training, not the training itself. The full 2,000
     hung on a storage fault.
   - Both resumed from the last complete checkpoint. No step was trained twice or skipped, but the rollouts from the
     cut-short part were discarded.
-- **Length:** only the start of stage 1 so far. The paper runs 148 steps on Goal, Spatial and Object, then adds Long
+- **Length:** the first 15 steps of stage 1. The paper runs 148 steps on Goal, Spatial and Object, then adds Long
   (steps 149-225), then trains on RoboDojo.
 - **Unchanged:** the base model, GRPO with the DAPO group filter, the loss, 4,096 prompt + 160,000 response tokens,
   xhigh effort, and the `libero_gso_all` task set.
@@ -94,6 +100,7 @@ This confirms the end point of training, not the training itself. The full 2,000
   - About 70 GPU-hours were lost to the two cut-short jobs.
 - **Earlier RL attempts on GB300:** about 98 GPU-hours (a smoke test and a 2-step measurement). They are not part of
   this curve.
+- **Total:** about 723 GPU-hours, before the step-15 evaluation (about 9 GPU-hours on GB200).
 
 ## Files and how to run
 
