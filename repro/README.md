@@ -4,10 +4,11 @@ An independent reproduction of PEAR ([arXiv 2611.18562](https://arxiv.org/abs/26
 code at `d604856`. The only code change is a `GPU=gb200` profile (the other commit on this branch). Two questions:
 
 1. Do the released checkpoints score what Table 2 reports? **Yes, within sampling error** (section 1).
-2. Does RL from the base model show the early rise of Figure 3a? **Too early to say.** After 10 of the paper's 148
-   stage-1 steps, at a quarter of the paper's batch, the training success rate is 2.5% (section 2).
+2. Does RL from the base model show the early rise of Figure 3a? **It has started to rise.** After 15 of the paper's
+   148 stage-1 steps, at a quarter of the paper's batch, the training success rate is about 3.9% (steps 12-15), up from
+   about 1.7% (steps 1-3) (section 2).
 
-Status (2026-11-19): stage-1 RL is still running and this branch will be updated.
+Status (2026-11-19, step 15): stage-1 RL is still running and this branch will be updated.
 
 ## 1. Released checkpoints on LIBERO
 
@@ -40,15 +41,27 @@ This confirms the end point of training, not the training itself. The full 2,000
 | 8 | 214 | 1,712 | 2.5% (1.9-3.4) | 15.0% | 36 min |
 | 9 | 261 | 2,088 | 1.9% (1.4-2.5) | 12.3% | 37 min |
 | 10 | 193 | 1,544 | 2.5% (1.9-3.4) | 16.6% | 37 min |
+| 11 | 216 | 1,728 | 2.7% (2.0-3.5) | 14.8% | 32 min |
+| 12 | 151 | 1,208 | 3.3% (2.4-4.5) | 21.2% | 32 min |
+| 13 | 150 | 1,200 | 3.2% (2.4-4.4) | 21.3% | 23 min |
+| 14 | 130 | 1,040 | 5.6% (4.3-7.1) | 25.4% | 28 min |
+| 15 | 145 | 1,160 | 3.4% (2.5-4.7) | 21.4% | 24 min |
 
 - **What is plotted:** the success rate of training rollouts, as in the thin line of the paper's Figure 3a. It is
   `training/filter_groups/avg@n`: every trajectory of every group sampled in that step, before the DAPO group filter.
   The recipe has no in-training evaluation (`test_freq: -1`).
 - **Per-step counts** are reconstructed from the logged metrics; `plot_s2_curve.py` explains how. The intervals treat
   trajectories as independent. The 8 trajectories of a group share a task, so the true intervals are wider.
-- **Reading so far:** steps 4-8 (2.4-3.4%) are above steps 1-3 (1.5-1.9%), but step 9 fell back to 1.9%. There is no
-  steady rise yet. The paper reports about 2% rising to about 70% within 148 steps of 128 groups. Ten of our steps
-  train on as many kept groups as 2.5 of the paper's steps, so no slope comparison is possible yet.
+- **Reading so far:** the rate has roughly doubled, though not monotonically.
+  - Steps 1-3 average about 1.7%, with 10-13% of groups having a success.
+  - Steps 12-15 average about 3.9%, with 21-25% of groups having a success.
+  - Step 14's interval (4.3-7.1%) lies entirely above steps 1-3. At the group level, 25% (33 of 130) is above step
+    2's 10% (32 of 319) too.
+  - Step 9 dipped to 1.9% along the way.
+  - The paper reports about 2% rising to about 70% within 148 steps of 128 groups. Fifteen of our steps train on as
+    many kept groups as 3.75 of the paper's steps, so a slope comparison is still premature.
+  - Fewer groups need to be sampled per step as more of them are kept, so steps are getting faster: 23-28 minutes for
+    steps 13-15, against 42-52 minutes for steps 1-3.
 
 ## 3. Differences from the paper's stage 1
 
@@ -75,8 +88,8 @@ This confirms the end point of training, not the training itself. The full 2,000
 ## 4. Cost
 
 - **Released-checkpoint evaluation:** about 25 GPU-hours on GB300.
-- **RL on GB200, steps 1-9:** 417 GPU-hours.
-  - A step takes about 37 minutes on 48 GPUs, or about 30 GPU-hours.
+- **RL on GB200, steps 1-15:** about 600 GPU-hours.
+  - A recent step takes 23-37 minutes on 48 GPUs, or about 18-30 GPU-hours.
   - Each job of at most 2 hours adds a cold start of about 13 minutes.
   - About 70 GPU-hours were lost to the two cut-short jobs.
 - **Earlier RL attempts on GB300:** about 98 GPU-hours (a smoke test and a 2-step measurement). They are not part of

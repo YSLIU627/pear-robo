@@ -69,9 +69,10 @@ fig, ax = plt.subplots(figsize=(7.2, 3.8), dpi=200, facecolor=SURFACE)
 ax.set_facecolor(SURFACE)
 ax.errorbar(steps, pct, yerr=[lo, hi], color=SERIES, ecolor=SERIES, elinewidth=1, capsize=0, alpha=0.9,
             linewidth=2, marker="o", markersize=5, markeredgecolor=SURFACE, markeredgewidth=1.5, zorder=3)
-for x, y in ((steps[0], pct[0]), (steps[-1], pct[-1])):
-    ax.annotate(f"{y:.1f}%", (x, y), textcoords="offset points", xytext=(0, 9), ha="center", fontsize=8, color=INK)
+for x, y, dx, ha in ((steps[0], pct[0], -7, "right"), (steps[-1], pct[-1], 7, "left")):  # beside the point, clear of its CI bar
+    ax.annotate(f"{y:.1f}%", (x, y), textcoords="offset points", xytext=(dx, 0), ha=ha, va="center", fontsize=8, color=INK)
 ax.set_xticks(steps)
+ax.set_xlim(steps[0] - 1.2, steps[-1] + 0.8)
 ax.set_xlabel("RL step (each trains on 32 kept groups x 8; the rate covers every sampled group, before the DAPO filter)",
               color=INK2, fontsize=8)
 ax.set_ylabel("training success rate (%)", color=INK2, fontsize=9)
