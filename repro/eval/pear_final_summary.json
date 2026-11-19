@@ -1,0 +1,23 @@
+{
+ "step": 9001,
+ "episodes": 120,
+ "score": 0.7166666666666667,
+ "by_data_source": {
+  "libero_10": {
+   "episodes": 30,
+   "score": 0.36666666666666664
+  },
+  "libero_goal": {
+   "episodes": 30,
+   "score": 0.5666666666666667
+  },
+  "libero_object": {
+   "episodes": 30,
+   "score": 0.9333333333333333
+  },
+  "libero_spatial": {
+   "episodes": 30,
+   "score": 1.0
+  }
+ }
+}

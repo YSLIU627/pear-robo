@@ -1,4 +1,4 @@
-# PEAR reproduction on a small budget (in progress)
+# PEAR reproduction on a small budget
 
 An independent reproduction of PEAR ([arXiv 2611.18562](https://arxiv.org/abs/2611.18562)) with this repository's
 code at `d604856`. The only code change is a `GPU=gb200` profile (the other commit on this branch). Two questions:
@@ -6,10 +6,10 @@ code at `d604856`. The only code change is a `GPU=gb200` profile (the other comm
 1. Do the released checkpoints score what Table 2 reports? **Yes, within sampling error** (section 1).
 2. Does RL from the base model show the early rise of Figure 3a? **It has started to rise.** After 15 of the paper's
    148 stage-1 steps, at a quarter of the paper's batch, the training success rate is about 3.9% (steps 12-15), up from
-   about 1.7% (steps 1-3) (section 2).
+   about 1.7% (steps 1-3) (section 2). A 120-episode LIBERO evaluation of the step-15 checkpoint is too small to show
+   this rise: it scores 3.3%, against 4.2% for the base model, with overlapping intervals.
 
-Status (2026-11-19): stage-1 RL was stopped after step 15. A LIBERO evaluation of the step-15 checkpoint (same
-protocol as section 1) is running and will be added here.
+Status (2026-11-19): stage-1 RL was stopped after step 15, and the step-15 checkpoint was evaluated (section 2).
 
 ## 1. Released checkpoints on LIBERO
 
@@ -69,6 +69,20 @@ model directory, which a recipe takes as `MODEL`. It is bf16, except `visual` an
 `rollout.fp32_modules` names them. It has no `mtp.*` tensors: training does not update the multi-token-prediction
 head, and the recipe decodes without speculation. The weights are not published here.
 
+**Evaluation of the step-15 checkpoint.** The protocol is that of section 1: the same 120 episodes, xhigh effort, and
+the same Hydra overrides apart from the model path. It ran on 2 GB200 nodes; section 1 ran on GB300.
+
+| Model | All (95% CI) | Goal | Spatial | Object | Long |
+|---|---|---|---|---|---|
+| Base | 5/120 = 4.2% (1.8-9.4) | 4/30 | 1/30 | 0/30 | 0/30 |
+| RL step 15 | 4/120 = 3.3% (1.3-8.3) | 1/30 | 1/30 | 2/30 | 0/30 |
+
+- At this size, the evaluation cannot tell the two models apart. It cannot confirm or rule out the rise in the training
+  rate, which is measured on 1,040-2,552 trajectories per step.
+- It agrees with the training rate at step 15, 3.4% (2.5-4.7).
+- Fewer episodes ended on an answer the parser could not read: 2 of 120, against 7 for the base.
+- It also shows that the exported checkpoint loads and runs in the recipe's rollout.
+
 ## 3. Differences from the paper's stage 1
 
 - **Batch:** 32 groups x 8 rollouts per step, counted after the group filter (paper: 128 x 8). The mini-batch is the
@@ -100,13 +114,15 @@ head, and the recipe decodes without speculation. The weights are not published 
   - About 70 GPU-hours were lost to the two cut-short jobs.
 - **Earlier RL attempts on GB300:** about 98 GPU-hours (a smoke test and a 2-step measurement). They are not part of
   this curve.
-- **Total:** about 723 GPU-hours, before the step-15 evaluation (about 9 GPU-hours on GB200).
+- **Step-15 evaluation:** about 7 GPU-hours on GB200 (2 nodes, 52 minutes).
+- **Total:** about 730 GPU-hours.
 
 ## Files and how to run
 
 - `s2_success_curve.png`, `s2_curve.csv`: the curve and the per-step numbers.
 - `metrics/metrics_*.jsonl`: the trainer's per-step metrics, one file per job.
 - `plot_s2_curve.py`: rebuilds the CSV and the plot from `metrics/`; it needs `matplotlib`.
+- `eval/*_summary.json`: the evaluation summaries of sections 1 and 2, as `examples/eval/eval_libero.sh` writes them.
 
 On 12 GB200 nodes, start Ray with `scripts/start_ray_node.sh` (`trainer` on 2 nodes, `rollout` on 10), then run:
 
